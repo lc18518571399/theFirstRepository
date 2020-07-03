@@ -2,12 +2,11 @@ function Mine(tr,td,mineNum){
     this.tr=tr;    //行数
     this.td=td;    //列数this
     this.mineNUm=mineNum;    //雷的数量
-
     this.squares = [];   //存储所有方块的信息，它是一个二维数组，按行与列的顺序排放。存取都使用行列的形式
     this.tds = [];    //存储所有的单元格的DOM
-
-    this.surplusMine=mineNum;    //剩余雷的数量
+    this.remainMine=mineNum;    //剩余雷的数量
     this.allRight=false;    //右击标记的小红旗是否全是雷。用来判断用户是否游戏成功。
+    this.input = document.getElementById('showResult');
     this.parent=document.querySelector('.gameBox');    
 
 };
@@ -18,8 +17,11 @@ Mine.prototype.randomNum=function(){
         square[i]=i;
 
     }
+    console.log(square);
     square.sort(function(){return 0.5-Math.random()}); 
+    console.log(square.slice(0, this.mineNUm));
     return square.slice(0,this.mineNUm);
+
 };
 Mine.prototype.init=function(){
     var rn=this.randomNum();  //雷在格子里的位置
@@ -27,7 +29,7 @@ Mine.prototype.init=function(){
     for(var i=0;i<this.tr;i++){
         this.squares[i]=[];
         for(var j=0;j<this.td;j++){
-            n++;
+            
             // this.squares[i][j]=;
             //取一个方块在数组的数据要用行与列的方式去取。找方块周围的方块的时候用坐标方式去取，长度为格子的总数
             if(rn.indexOf(n)!=-1){
@@ -36,6 +38,7 @@ Mine.prototype.init=function(){
             }else{
                 this.squares[i][j]={type:'number',x:j,y:i,value:0};
             }
+            n++;
         }
     } 
     // this.randomNum();
@@ -48,7 +51,7 @@ Mine.prototype.init=function(){
     }
     //剩余雷数
     this.mineNUmDom=document.querySelector('.mineNum');
-    this.mineNUmDom.innerHTML=this.surplusMine;
+    this.mineNUmDom.innerHTML=this.remainMine;
 
 };
 
@@ -127,10 +130,13 @@ Mine.prototype.updateNum=function(){
     }
 };
 Mine.prototype.play=function(ev,obj){
+    console.log(ev);
+    console.log(obj);
     var This=this;
     if(ev.which==1 && obj.className!='flag'){//后面的条件禁止点击小红旗标记的方格
+
         //点击左键
-        // console.log(obj);
+        // alert(obj);
         var curSquare=this.squares[obj.pos[0]][obj.pos[1]];
         var cl=['zero','one','two','three','four','five','six','seven','eight'];
         if(curSquare.type=='number'){
@@ -167,11 +173,16 @@ Mine.prototype.play=function(ev,obj){
                     }
                 }
                 getAllZero(curSquare);
+              
             }
+            this.leftOver(cl);
         }else{
             //用户点击的是雷
+            obj.onmousedown = null;
+            This.input.value = '游戏结束';
             this.gameOver(obj);
         }
+
     }
     //用户点击的是右键
     if(ev.which==3){
@@ -187,16 +198,17 @@ Mine.prototype.play=function(ev,obj){
             this.allRight=false;
         }
         if(obj.className=='flag'){
-            this.mineNUmDom.innerHTML= --this.surplusMine;
+            this.mineNUmDom.innerHTML= --this.remainMine;
         }else{
-            this.mineNUmDom.innerHTML = ++this.surplusMine;
+            this.mineNUmDom.innerHTML = ++this.remainMine;
         }
-        if(this.surplusMine==0){
+        if(this.remainMine===0){
             //剩余的雷的数量为0，表示用户已经标记玩小红旗了，这时候要判断游戏是成功还是结束
             if(this.allRight){
-                alert('恭喜你，游戏通过');
+                This.input.value='恭喜你，游戏通过';
+                obj.onmousedown = null;
             }else{
-                alert('游戏失败，再来一局？');
+                This.input.value = '游戏结束';
                 this.gameOver();
             }
 
@@ -205,6 +217,56 @@ Mine.prototype.play=function(ev,obj){
     }
 
 };
+Mine.prototype.leftOver=function(cl){
+    let This=this;
+    let leftNum = 0;
+    for (let i = 0; i < this.tr; i++) {
+        for (let j = 0; j < this.td; j++) {
+            // console.log(this.tds[i][j]);
+            // console.log(this.tds[i][j].className)
+            if (cl.indexOf(this.tds[i][j].className) !== -1) {
+                leftNum++;
+            }
+            // let classCompare=true;
+            // for(let k=0;k<cl.length;k++){
+            //     if (This.tds[i][j].className!=cl[k]){
+            //         classCompare=false;
+            //     }
+            //     if (classCompare){
+            //     leftNum++;
+            // }
+
+
+        }
+    }
+    // console.log(leftNum);
+    if (leftNum === (this.tr * this.td - this.mineNUm)) {
+        this.input.value='成功！';
+        this.gameOver();
+        // document.getElementsByClassName('gameBox')=function(){
+        //     alert('hello!');
+        // };
+        // console.log(document.getElementsByClassName('gameBox'));
+
+        // let elements = document.getElementsByTagName('td').each(element => {
+        //     console.log(element)
+        //     element.onclick = function () {
+        //         alert('hello');
+        //    }
+        // });
+        // this.tds.onmousedown = null;
+        // let aff = confirm('通关了这个游戏，是否继续？');
+        // if (aff) {
+        //     this.init();
+        // } else if (confirm("是否关闭本窗口")) {
+        //     window.close();
+        // }
+    }
+
+
+
+}
+Mine.prototype.unClick
 //游戏失败
 Mine.prototype.gameOver=function(clickTd){
     /*
@@ -229,7 +291,7 @@ Mine.prototype.gameOver=function(clickTd){
 var btns=document.querySelectorAll('.level button');
 var mine=null;//用来存储生成的实例
 var ln=0;//用来处理当前选中的状态
-var arr=[[9,9,9],[16,16,40],[28,28,99]];//不同级别的行数、列数、雷数
+var arr=[[6,5,10],[16,20,40],[64,64,200]];//不同级别的行数、列数、雷数
 for(let i=0;i<btns.length-1;i++){
     btns[i].onclick=function(){
         btns[ln].className='';
